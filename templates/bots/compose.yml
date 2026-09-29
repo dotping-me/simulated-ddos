@@ -1,0 +1,28 @@
+services:
+  bot:
+    build:
+      context: ../../attacker
+      dockerfile: bot/Dockerfile
+
+    networks:
+      - bot_network
+      - victim_network
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    command:
+      - "--master"
+      - "ws://host.docker.internal:8080/connect"
+
+networks:
+  bot_network:
+    name: bot_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+  victim_network:
+    external: true
+    name: victim_network

@@ -51,64 +51,34 @@ Follow these steps to get your development environment setup.
     git clone https://github.com/dotping-me/simulated-ddos.git && cd simulated-ddos/
     ```
 
-2. **Attacker Setup**
-    
-    Make sure to run the following scripts from within `/attacker`:
+2. **Ensure network reachability within environment**
     ```bash
-    cd attacker/ # From project root
-    ```
-    * **2.1. Build binairies**
-        ```bash
-        go buid -o bin/c2 ./cmd/c2/main.go
-        ```
-
-3. **Bot and Botnet Setup**
-    
-    Make sure to run the following scripts from within `/attacker`:
-    ```bash
-    cd attacker/ # From project root
+    ./scripts/add_ufw_rule.sh
     ```
 
-    * **3.1. Build Docker image**
-        ```bash
-        docker build --no-cache -f ./bot/Dockerfile -t bot_image .
-        ```
-
-    * **3.2. Ensure firewall does not get in the way**
-        ```bash
-        ../scripts/add_ufw_rule.sh # scripts/ found from Project root
-        ```
-
-        ***Note:*** 
-        * *Manually check (using `ip -4 addr`) and modify variables in `add_ufw_rule.sh` and `delete_ufw_rule.sh`*
-        * *Idea behind spinning up a bot is:*
-            ```bash
-            sudo docker run -d \
-                --add-host=host.docker.internal:host-gateway \
-                bot_image \
-                --master ws://host.docker.internal:8080/connect
-            ```
-        * To monitor container resource usage, use:
-            ```bash
-            sudo docker stats
-            ```
-
-6. **Create target environment using Docker Compose**
+3. **Create target environment**
     ```bash
     sudo docker compose -f templates/baseline/compose.yml up --build -d
     ```
 
-6. **Start C2 HTTP server**
+4. **Create bot environment**
     ```bash
-    ./attacker/bin/c2 # From project root
+    sudo docker compose -f templates/baseline/compose.yml up --build -d
     ```
 
-7. **Create botnet**
-    ```bash
-    ./scripts/create_botnet.sh 10 # From project root and takes N bots as arg
-    ```
+    * Use `--scale` to spin up multiple bots:
+        ```bash
+        sudo docker compose -f templates/baseline/compose.yml up --build -d --scale bot=10
+        ```
 
-8. **Cleanup**
+5. **Start C2 HTTP server**
     ```bash
-    sudo docker compose -f templates/baseline/compose.yml down && ./scripts/delete_botnet.sh && ./scripts/delete_ufw_rule.sh # Executed from project root
+    go run ./attacker/cmd/c2/main.go
+    ```
+    
+6. **Cleanup**
+    ```bash
+    sudo docker compose -f templates/bots/compose.yml down
+    sudo docker compose -f templates/baseline/compose.yml down
+    ./scripts/delete_ufw_rule.sh
     ```
