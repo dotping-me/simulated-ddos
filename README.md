@@ -29,6 +29,11 @@ The bot then receives target IPs from the C2 layer and executes scripts accordin
 ### 3. Vulnerable E-Commerce Web Application
 The web application is implemented using *Node.js* and *SQLite*, running on a container with low specs so as to crash faster for the sake of demonstration. The web application provides a **search feature with filtering options, which the botnet will exploit by sending volumous amounts of complex queries** which requires the database to work significantly more until resources are exhausted.
 
+### 4. Simulated Environment
+Docker is used to create the simulated environment comprising:
+* **Botnet Network** on the default Docker Bridge
+* **Victim Network** on a custom Docker Network
+
 ## 🔧 Possible Countermeasures 
 
 ## 📦 Prerequisites
@@ -36,6 +41,7 @@ Make sure you have the following dependencies installed.
 
 * [Golang 1.27.0](https://go.dev/doc/install)
 * [Docker 29.7.2](https://www.docker.com/get-started/)
+* [Docker Compose 5.5.0](https://docs.docker.com/compose/install/)
 
 ## 💻 Setup & Usage
 Follow these steps to get your development environment setup.
@@ -63,17 +69,12 @@ Follow these steps to get your development environment setup.
     cd attacker/ # From project root
     ```
 
-    * **3.1. Start Docker daemon**
-        ```bash
-        sudo systemctl start docker
-        ```
-
-    * **3.2. Build Docker image**
+    * **3.1. Build Docker image**
         ```bash
         docker build --no-cache -f ./bot/Dockerfile -t bot_image .
         ```
 
-    * **3.3. Ensure firewall does not get in the way**
+    * **3.2. Ensure firewall does not get in the way**
         ```bash
         ../scripts/add_ufw_rule.sh # scripts/ found from Project root
         ```
@@ -92,19 +93,22 @@ Follow these steps to get your development environment setup.
             sudo docker stats
             ```
 
-3. **Victim Setup**
-
-    Make sure to run the following scripts from within `/victim`:
+6. **Create target environment using Docker Compose**
     ```bash
-    cd victim/ # From project root
+    sudo docker compose -f templates/baseline/compose.yml up --build -d
     ```
 
-4. **Start C2 HTTP server**
+6. **Start C2 HTTP server**
     ```bash
     ./attacker/bin/c2 # From project root
     ```
 
-5. **Spin up botnet**
+7. **Create botnet**
     ```bash
     ./scripts/create_botnet.sh 10 # From project root and takes N bots as arg
+    ```
+
+8. **Cleanup**
+    ```bash
+    sudo docker compose -f templates/baseline/compose.yml down && ./scripts/delete_botnet.sh && ./scripts/delete_ufw_rule.sh # Executed from project root
     ```

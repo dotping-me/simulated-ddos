@@ -1,0 +1,17 @@
+services:
+  victim:
+    build:
+      context: ../../victim
+    container_name: victim
+    ports:
+      - "8081:9000"
+    networks:
+      - victim_network
+
+networks:
+  victim_network:
+    name: victim_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.0.2.0/24
