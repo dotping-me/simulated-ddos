@@ -6,9 +6,13 @@ const path = require("node:path");
 const { URL } = require("node:url");
 const db = require("./database");
 
+let reqCount = 0; // Just visual feedback
+
 const server = http.createServer((req, res) => {
+    reqCount++;
+
     const url = new URL(req.url, `http://${req.headers.host}`);
-    console.log(`${req.method} ${req.url}${url.search}`);
+    console.log(`${reqCount} | ${req.method} ${req.url}${url.search}`);
 
     // API Route
     if (url.pathname === "/api/items") {

