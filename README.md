@@ -61,12 +61,19 @@ Follow these steps to get your development environment setup.
     sudo docker compose -f templates/baseline/compose.yml up --build -d
     ```
 
+    * ***Note:*** *To see live logs, attach existing STDOUT to terminal:*
+        
+        ```bash
+        sudo docker attach victim
+        ```
+
 4. **Create bot environment**
     ```bash
     sudo docker compose -f templates/bots/compose.yml up --build -d
     ```
 
     * Use `--scale` to spin up multiple bots:
+    
         ```bash
         sudo docker compose -f templates/baseline/compose.yml up --build -d --scale bot=10
         ```

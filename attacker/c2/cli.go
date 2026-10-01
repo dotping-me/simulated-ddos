@@ -76,7 +76,7 @@ $$$$$$$  |$$$$$$$  | $$$$$$  |\$$$$$$  |
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Print("\nc2 # ")
+		fmt.Print("c2 # ")
 		input, err := reader.ReadString('\n')
 		if err != nil {
 			return err

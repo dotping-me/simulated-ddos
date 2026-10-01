@@ -16,15 +16,19 @@ COPY bot/ ./bot/
 COPY cmd/bot/ ./cmd/bot/
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bot ./cmd/bot
+RUN chmod +x /app/bot/flood.sh
 
 # 2. Runtime stage
 FROM alpine:latest
+RUN apk add --no-cache bash
 
 # Runs the binary which starts the relevant scripts
 RUN adduser -D -H bot
 
 COPY --from=builder /bot /bot
-RUN chmod 755 /bot && chown bot:bot /bot
+COPY --from=builder /app/bot /app/bot
+
+RUN chmod 755 /bot /app/bot/flood.sh && chown -R bot:bot /app/bot /bot
 USER bot
 
 ENTRYPOINT ["/bot"]

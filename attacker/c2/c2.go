@@ -64,6 +64,7 @@ func (m *Master) Serve(addr string) error {
 	logMessage := fmt.Sprintf("[C] HTTP Server listening on %s\n", addr)
 	log.Printf(logMessage)
 	fmt.Println(strings.Repeat("-", utf8.RuneCountInString(logMessage)+20))
+	fmt.Println()
 
 	return http.ListenAndServe(addr, mux)
 }
