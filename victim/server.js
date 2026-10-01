@@ -1,22 +1,59 @@
-const http = require("http");
+const http = require("node:http");
 const PORT = process.env.PORT || 9000;
 
-const server = http.createServer((req, res) => {
-    console.log(`${req.method} ${req.url}`);
-    if (req.url === "/") {
-        res.writeHead(200, {
-            "Content-Type": "application/json"
-        });
+const fs = require("node:fs");
+const path = require("node:path");
+const { URL } = require("node:url");
+const db = require("./database");
 
-        return res.end(JSON.stringify({
-            status: "DDoS sim"
-        }));
+const server = http.createServer((req, res) => {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    console.log(`${req.method} ${req.url}${url.search}`);
+
+    // API Route
+    if (url.pathname === "/api/items") {
+        const search = url.searchParams.get("search") || "";
+        const maxPrice = url.searchParams.get("maxprice");
+
+        let query = `
+            SELECT id, name, description, price
+            FROM items
+            WHERE 1 = 1
+        `;
+
+        const params = [];
+        if (search) {
+            query += `
+                AND (
+                    name LIKE ?
+                    OR description LIKE ?
+                )
+            `;
+
+            const pattern = `%${search}%`;
+            params.push(pattern, pattern);
+        }
+
+        if (maxPrice) {
+            query += ` AND price <= ?`;
+            params.push(Number(maxPrice));
+        }
+
+        query += ` ORDER BY price ASC`;
+        const items = db.prepare(query).all(...params);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify(items));
     }
 
-    res.writeHead(404, {
-        "Content-Type": "text/plain"
-    });
+    // Serve webpage
+    if (url.pathname === "/" || url.pathname === "/index.html") {
+        const file = fs.readFileSync(path.join(__dirname, "index.html"));
+        res.writeHead(200, { "Content-Type": "text/html" });
 
+        return res.end(file);
+    }
+
+    res.writeHead(404, { "Content-Type": "text/plain" });
     res.end("Not Found\n");
 });
 

@@ -4,9 +4,20 @@ services:
       context: ../../victim
     container_name: victim
     ports:
-      - "8081:9000"
+      - "9000:9000"
+    
     networks:
       - victim_network
+
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+          pids: 64
+
+    mem_limit: 128m
+    cpus: 0.25
 
 networks:
   victim_network:

@@ -3,8 +3,12 @@ WORKDIR /app
 
 COPY package.json ./
 COPY server.js ./
+COPY database.js ./
+COPY index.html ./
 
-EXPOSE 8081
+RUN chown -R node:node /app
+
 USER node
+EXPOSE 9000
 
 CMD ["node", "server.js"]

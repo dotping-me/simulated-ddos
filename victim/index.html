@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dummy Website</title>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            padding: 8px;
+        }
+
+        button {
+            padding: 8px 16px;
+        }
+
+        .item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .price {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <form method="GET" action="/">
+        <input type="text" name="search" id="search" placeholder="Search items...">
+        <input type="number" name="maxprice" id="maxprice" placeholder="Maximum $" min="0">
+        <input type="submit" value="Search">
+    </form>
+
+    <div id="items"></div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+
+        const search = params.get("search") || "";
+        const maxprice = params.get("maxprice") || "";
+
+        // Page fetches all items on page load
+        fetch(`/api/items?search=${encodeURIComponent(search)}&maxprice=${encodeURIComponent(maxprice)}`)
+            .then(response => response.json())
+            .then(items => {
+                const container = document.getElementById("items");
+                if (items.length === 0) {
+                    container.innerHTML = "<p>No items found.</p>";
+                    return;
+                }
+
+                for (const item of items) {
+                    const element = document.createElement("div");
+                    element.className = "item";
+                    element.innerHTML = `
+                        <h2>${item.name}</h2>
+                        <p>${item.description}</p>
+                        <p class="price">$${item.price.toFixed(2)}</p>
+                    `;
+
+                    container.appendChild(element);
+                }
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    </script>
+</body>
+</html>
