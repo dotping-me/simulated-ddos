@@ -12,7 +12,7 @@ const server = http.createServer((req, res) => {
     reqCount++;
 
     const url = new URL(req.url, `http://${req.headers.host}`);
-    console.log(`${reqCount} | ${req.method} ${req.url}${url.search}`);
+    console.log(`${reqCount} | ${req.method} ${req.url}`);
 
     // API Route
     if (url.pathname === "/api/items") {

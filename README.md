@@ -51,39 +51,17 @@ Follow these steps to get your development environment setup.
     git clone https://github.com/dotping-me/simulated-ddos.git && cd simulated-ddos/
     ```
 
-2. **Ensure network reachability within environment**
-    ```bash
-    ./scripts/add_ufw_rule.sh
-    ```
-
-3. **Create target environment**
-    ```bash
-    sudo docker compose -f templates/baseline/compose.yml up --build -d
-    ```
-
-    * ***Note:*** *To see live logs, attach existing STDOUT to terminal:*
-        
-        ```bash
-        sudo docker attach victim
-        ```
-
-4. **Create bot environment**
-    ```bash
-    sudo docker compose -f templates/bots/compose.yml up --build -d
-    ```
-
-    * Use `--scale` to spin up multiple bots:
-    
-        ```bash
-        sudo docker compose -f templates/baseline/compose.yml up --build -d --scale bot=10
-        ```
-
-5. **Start C2 HTTP server**
+2. **Start C2 HTTP server**
     ```bash
     cd ./attacker && go run ./cmd/c2/main.go
     ```
-    
-6. **Cleanup**
+
+3. **Spin up a given environment**
     ```bash
-    ./scripts/cleanup.sh <template> # i.e. ./scripts/cleanup.sh rate_limit
+    ./scripts/start <template> <num_bots> # i.e. ./scripts/start rate_limit 5 (Run from Project root)
+    ```
+   
+4. **Cleanup after the mess**
+    ```bash
+    ./scripts/cleanup.sh <template> # i.e. ./scripts/cleanup.sh rate_limit (Run from Project root)
     ```

