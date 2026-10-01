@@ -2,6 +2,7 @@
 
 # This script just properly shuts down everything. Note that it is meant to be run from the project root!
 
+TEMPLATE=$1
 sudo docker compose -f templates/bots/compose.yml down
-sudo docker compose -f templates/baseline/compose.yml down
+sudo docker compose -f templates/$TEMPLATE/compose.yml down
 bash ./scripts/delete_ufw_rule.sh

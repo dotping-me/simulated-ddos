@@ -85,7 +85,5 @@ Follow these steps to get your development environment setup.
     
 6. **Cleanup**
     ```bash
-    sudo docker compose -f templates/bots/compose.yml down
-    sudo docker compose -f templates/baseline/compose.yml down
-    ./scripts/delete_ufw_rule.sh
+    ./scripts/cleanup.sh <template> # i.e. ./scripts/cleanup.sh rate_limit
     ```

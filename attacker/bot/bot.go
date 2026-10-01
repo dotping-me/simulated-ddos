@@ -111,7 +111,7 @@ func (b *Bot) Listen() error {
 					default:
 						if err := b.Execute("/app/bot/flood.sh", target); err != nil { // NOTE: absolute path within container
 							log.Printf(err.Error())
-							return
+							return // TODO: Get status code, keep trying if 429
 						}
 					}
 				}

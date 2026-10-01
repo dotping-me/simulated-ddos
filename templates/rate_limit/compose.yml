@@ -1,0 +1,36 @@
+services:
+  victim:
+    build:
+      context: ../../victim
+
+    container_name: victim
+    networks:
+      - victim_network
+
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 64
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "9000:9000" # NGINX exposes the port rather than HTTP server itself
+
+    volumes:
+      - ../../fixes/rate_limit/nginx.conf:/etc/nginx/nginx.conf:ro
+
+    depends_on:
+      - victim
+
+    networks:
+      - victim_network
+
+networks:
+  victim_network:
+    name: victim_network
+    driver: bridge
+
+    ipam:
+      config:
+        - subnet: 192.0.2.0/24
