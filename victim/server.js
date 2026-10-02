@@ -7,12 +7,14 @@ const { URL } = require("node:url");
 const db = require("./database");
 
 let reqCount = 0; // Just visual feedback
+const INSTANCE = process.env.INSTANCE || "victim";
 
 const server = http.createServer((req, res) => {
+    const clientIP = req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.socket.remoteAddress;
     reqCount++;
 
     const url = new URL(req.url, `http://${req.headers.host}`);
-    console.log(`${reqCount} | ${req.method} ${req.url}`);
+    console.log(`[${INSTANCE}] ${reqCount.toString().padStart(6, "0")} | ${req.method} ${req.url} ← ${clientIP}`);
 
     // API Route
     if (url.pathname === "/api/items") {
