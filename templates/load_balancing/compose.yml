@@ -1,41 +1,21 @@
-# PS: Forgot to add Instance but that's just details
-
 services:
-  victim_1:
+  router:
     build:
-      context: ../../victim
+      context: ../../router
+    container_name: router
 
-    container_name: victim_1
+    cap_add:
+      - NET_ADMIN
+
+    sysctls:
+      net.ipv4.ip_forward: "1"
+
     networks:
-      - victim_network
+      bot_network:
+        ipv4_address: 172.20.0.2
 
-    mem_limit: 128m
-    cpus: 0.25
-    pids_limit: 64
-
-  victim_2:
-    build:
-      context: ../../victim
-
-    container_name: victim_2
-    networks:
-      - victim_network
-
-    mem_limit: 128m
-    cpus: 0.25
-    pids_limit: 64
-
-  victim_3:
-    build:
-      context: ../../victim
-
-    container_name: victim_3
-    networks:
-      - victim_network
-
-    mem_limit: 128m
-    cpus: 0.25
-    pids_limit: 64
+      victim_network:
+        ipv4_address: 192.0.2.2
 
   nginx:
     image: nginx:alpine
@@ -43,22 +23,123 @@ services:
     ports:
       - "9000:9000" # NGINX exposes the port rather than HTTP server itself
 
+    cap_add:
+      - NET_ADMIN
+
     volumes:
       - ../../fixes/load_balancing/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../fixes/entrypoint.sh:/entrypoint-custom.sh:ro
+
+    entrypoint:
+      - /bin/sh
+      - /entrypoint-custom.sh
 
     depends_on:
+      - router
       - victim_1
       - victim_2
       - victim_3
 
     networks:
-      - victim_network
+      victim_network:
+        ipv4_address: 192.0.2.3
+
+  victim_1:
+    build:
+      context: ../../victim
+
+    cap_add:
+      - NET_ADMIN
+
+    container_name: victim_1
+    networks:
+      victim_network:
+        ipv4_address: 192.0.2.4
+
+    environment:
+      INSTANCE: victim_1
+
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 64
+
+    depends_on:
+      - router
+
+  victim_2:
+    build:
+      context: ../../victim
+
+    cap_add:
+      - NET_ADMIN
+
+    container_name: victim_2
+    networks:
+      victim_network:
+        ipv4_address: 192.0.2.5
+
+    environment:
+      INSTANCE: victim_2
+
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 64
+
+    depends_on:
+      - router
+
+  victim_3:
+    build:
+      context: ../../victim
+
+    cap_add:
+      - NET_ADMIN
+
+    container_name: victim_3
+    networks:
+      victim_network:
+        ipv4_address: 192.0.2.6
+
+    environment:
+      INSTANCE: victim_3
+
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 64
+
+    depends_on:
+      - router
+
+  bot:
+    build:
+      context: ../../attacker
+      dockerfile: bot/Dockerfile
+    networks:
+      - bot_network
+
+    cap_add:
+      - NET_ADMIN
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - "--master"
+      - "ws://host.docker.internal:8080/connect"
+
+    depends_on:
+      - router
 
 networks:
+  bot_network:
+    name: bot_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
   victim_network:
     name: victim_network
     driver: bridge
-
     ipam:
       config:
         - subnet: 192.0.2.0/24

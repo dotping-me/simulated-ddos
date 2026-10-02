@@ -1,4 +1,19 @@
 services:
+  router:
+    build:
+      context: ../../router
+    container_name: router
+
+    cap_add:
+      - NET_ADMIN
+
+    sysctls:
+      net.ipv4.ip_forward: "1"
+
+    networks:
+      bot_network:
+      victim_network:
+
   victim:
     build:
       context: ../../victim
@@ -8,6 +23,9 @@ services:
     
     networks:
       - victim_network
+
+    cap_add:
+      - NET_ADMIN
 
     deploy:
       resources:
@@ -19,7 +37,36 @@ services:
     mem_limit: 128m
     cpus: 0.25
 
+    depends_on:
+      - router
+
+  bot:
+    build:
+      context: ../../attacker
+      dockerfile: bot/Dockerfile
+    networks:
+      - bot_network
+
+    cap_add:
+      - NET_ADMIN
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - "--master"
+      - "ws://host.docker.internal:8080/connect"
+
+    depends_on:
+      - router
+
 networks:
+  bot_network:
+    name: bot_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
   victim_network:
     name: victim_network
     driver: bridge

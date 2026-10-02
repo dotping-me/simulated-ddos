@@ -31,10 +31,20 @@ The web application is implemented using *Node.js* and *SQLite*, running on a co
 
 ### 4. Simulated Environment
 Docker is used to create the simulated environment comprising:
-* **Botnet Network** on the default Docker Bridge
-* **Victim Network** on a custom Docker Network
+* **Botnet Network** on a Docker subnet `172.20.0.0`
+* **Victim Network** on a Docker subnet `192.0.2.0`
+
+Topology (inside Docker) is as follows:
+```
+Bot Network (172.20.0.x) ----- (172.20.0.2) Router (192.0.2.2) ----- (192.0.2.x) Victim Network
+```
 
 ## 🔧 Possible Countermeasures 
+This section briefly goes over the implemented counter measures.
+
+### 1. Firewall + Rate Limiting
+### 2. Firewall + Rate Limiting + Request Cache
+### 3. Firewall + Rate Limiting + Request Cache + Load Balancing
 
 ## 📦 Prerequisites
 Make sure you have the following dependencies installed.
@@ -56,12 +66,12 @@ Follow these steps to get your development environment setup.
     cd ./attacker && go run ./cmd/c2/main.go
     ```
 
-3. **Spin up a given environment**
+3. **Spin up a given environment (from Project Root)**
     ```bash
-    ./scripts/start <template> <num_bots> # i.e. ./scripts/start rate_limit 5 (Run from Project root)
+    sudo docker compose -f templates/<template>/compose.yml up --build -d --scale bot=<num_of_bots>
     ```
    
-4. **Cleanup after the mess**
+4. **Cleanup after the mess (from Project Root)**
     ```bash
-    ./scripts/cleanup.sh <template> # i.e. ./scripts/cleanup.sh rate_limit (Run from Project root)
+    sudo docker compose -f templates/<template>/compose.yml down --remove-orphans
     ```

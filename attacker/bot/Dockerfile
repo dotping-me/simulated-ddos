@@ -20,15 +20,14 @@ RUN chmod +x /app/bot/flood.sh
 
 # 2. Runtime stage
 FROM alpine:latest
-RUN apk add --no-cache bash
+RUN apk add --no-cache bash iproute2 su-exec
 
 # Runs the binary which starts the relevant scripts
 RUN adduser -D -H bot
 
 COPY --from=builder /bot /bot
 COPY --from=builder /app/bot /app/bot
+COPY bot/entrypoint.sh /entrypoint.sh
+RUN chmod 755 /bot /entrypoint.sh /app/bot/flood.sh && chown -R bot:bot /app/bot /bot
 
-RUN chmod 755 /bot /app/bot/flood.sh && chown -R bot:bot /app/bot /bot
-USER bot
-
-ENTRYPOINT ["/bot"]
+ENTRYPOINT ["/entrypoint.sh"]
