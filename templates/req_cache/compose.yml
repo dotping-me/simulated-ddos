@@ -1,0 +1,93 @@
+services:
+  router:
+    build:
+      context: ../../router
+    container_name: router
+
+    cap_add:
+      - NET_ADMIN
+
+    sysctls:
+      net.ipv4.ip_forward: "1"
+
+    networks:
+      bot_network:
+        ipv4_address: 172.20.0.2
+
+      victim_network:
+        ipv4_address: 192.0.2.2
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "9000:9000" # NGINX exposes the port rather than HTTP server itself
+
+    cap_add:
+      - NET_ADMIN
+
+    volumes:
+      - ../../fixes/req_cache/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../fixes/entrypoint.sh:/entrypoint-custom.sh:ro
+
+    entrypoint:
+      - /bin/sh
+      - /entrypoint-custom.sh
+
+    depends_on:
+      - router
+      - victim
+
+    networks:
+      victim_network:
+        ipv4_address: 192.0.2.3
+
+  victim:
+    build:
+      context: ../../victim
+
+    container_name: victim
+    networks:
+      victim_network:
+        ipv4_address: 192.0.2.4
+
+    cap_add:
+      - NET_ADMIN
+
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 64
+
+  bot:
+    build:
+      context: ../../attacker
+      dockerfile: bot/Dockerfile
+    networks:
+      - bot_network
+
+    cap_add:
+      - NET_ADMIN
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - "--master"
+      - "ws://host.docker.internal:8080/connect"
+
+    depends_on:
+      - router
+
+networks:
+  bot_network:
+    name: bot_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+  victim_network:
+    name: victim_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.0.2.0/24
