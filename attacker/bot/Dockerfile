@@ -5,8 +5,6 @@
 FROM golang:1.27-alpine AS builder
 WORKDIR /app
 
-# TODO: Can include tcpdump to show network activity
-
 # Downloading dependencies
 COPY go.mod go.sum ./
 RUN go mod download
@@ -20,7 +18,9 @@ RUN chmod +x /app/bot/flood.sh
 
 # 2. Runtime stage
 FROM alpine:latest
-RUN apk add --no-cache bash iproute2 su-exec
+
+# Install packages
+RUN apk add --no-cache bash iproute2 su-exec hping3 tcpdump
 
 # Runs the binary which starts the relevant scripts
 RUN adduser -D -H bot

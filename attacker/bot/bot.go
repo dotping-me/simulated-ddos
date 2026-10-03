@@ -51,7 +51,7 @@ func (b *Bot) Execute(fpath string, args string) error {
 
 	// TODO: Also validate valid address
 
-	cmd := exec.Command("bash", fpath, args)
+	cmd := exec.Command("./flood.sh", fpath, args)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		log.Printf("[×] Failed during exection of %s: %s", fpath, output)
 		return err

