@@ -9,6 +9,12 @@ const db = require("./database");
 let reqCount = 0; // Just visual feedback
 const INSTANCE = process.env.INSTANCE || "victim";
 
+// Custom bs because the victim is pulling a last stand on my a-
+const WORK_ITERATIONS = 500;
+const WORK_MB = 1;
+const WORK_HOLD_MS = 500;
+const activeWork = new Set();
+
 const server = http.createServer((req, res) => {
     const clientIP = req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.socket.remoteAddress;
     reqCount++;
@@ -47,8 +53,20 @@ const server = http.createServer((req, res) => {
 
         query += ` ORDER BY price ASC`;
         const items = db.prepare(query).all(...params);
+
+        // Intentional extra work on the server (CPU workload)
+        const processedItems = items.map(item => ({ ...item, score: calculateScore(item) }));
+
+        // Extra memory workload
+        if (WORK_MB > 0) {
+            const w = allocateWork(WORK_MB);
+            activeWork.add(w) // Keeps it in a set of memory address is used up
+
+            setTimeout(() => { activeWork.delete(w); }, WORK_HOLD_MS); // Frees up memory
+        }
+
         res.writeHead(200, { "Content-Type": "application/json" });
-        return res.end(JSON.stringify(items));
+        return res.end(JSON.stringify(processedItems));
     }
 
     // Serve webpage
@@ -66,3 +84,24 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
     console.log(`Victim listening on 0.0.0.0:${PORT}`);
 });
+
+function calculateScore(item) {
+    let score = 0;
+    const text = `${item.name} ${item.description}`;
+    for (let i = 0; i < 1000; i++) {
+        for (let j = 0; j < text.length; j++) {
+            score += text.charCodeAt(j) * (i + 1);
+        }
+    }
+
+    return score;
+}
+
+function allocateWork(sizeMB) { 
+    const buffer = Buffer.alloc( sizeMB * 1024 * 1024 ); // Actually commits memory
+    for (let i = 0; i < buffer.length; i += 4096) { 
+        buffer[i] = 1;
+    } 
+    
+    return buffer;
+}

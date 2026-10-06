@@ -58,6 +58,10 @@ services:
     cpus: 0.25
     pids_limit: 64
 
+    environment:
+      INSTANCE: victim
+      FIREWALL_ENABLED: "true" # NOTE: Can also parse NGINX IP here this way instead of hardcoding it
+
   bot:
     build:
       context: ../../attacker

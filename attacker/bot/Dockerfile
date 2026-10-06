@@ -18,9 +18,7 @@ RUN chmod +x /app/bot/flood.sh
 
 # 2. Runtime stage
 FROM alpine:latest
-
-# Install packages
-RUN apk add --no-cache bash iproute2 su-exec hping3 tcpdump
+RUN apk add --no-cache bash iproute2 su-exec wrk
 
 # Runs the binary which starts the relevant scripts
 RUN adduser -D -H bot
