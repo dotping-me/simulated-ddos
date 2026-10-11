@@ -18,7 +18,7 @@ This section details how the simulation has been designed.
 ### 1. Virtual Docker Container (Bot)
 This project uses **Docker**, acting as the test environment, to spin up multiple containers with scripts for:
 * Establishing a Websocket connection to the Bot Master (C2 Layer)
-* Bash scripts to attack, using relevant tools such as `hping3`, a given target
+* Bash scripts to attack, using relevant tools such as `wrk`, a given target
 
 ### 2. HTTP Server managing Websocket Connections (Master)
 When a container (bot) starts, it attempts to establish a Websocket connection with the C2 layer and keeps trying until one is established. The C2 Layer has an HTTP server that manages Websocket connections, and sends/broadcasts messages to
